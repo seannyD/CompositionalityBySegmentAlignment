@@ -24,7 +24,6 @@ def getAlignmentWeights(filename):
 	colNames = dat[0]
 	#(exclude the first line, which should be the column names)
 	dat = dat[1:]
-	print(dat)
 	
 	# Build a dictionary of transition weights between segments
 	# (read the matrix)
@@ -84,19 +83,25 @@ def getWordDistances(words, alignmentWeights):
 				wordA = words[n1]
 				wordB = words[n2]
 				# get the alignment (Needleman-Wunsch algorithm nw_align from LingPy)
-				almA, almB, sim = nw_align(wordA, wordB, scorer=alignmentWeights)
+				# similarity score
+				almA, almB, simAB = nw_align(wordA, wordB, scorer=alignmentWeights)
+				almAX, almBX, simAA = nw_align(wordA, wordA, scorer=alignmentWeights)
+				almAY, almBY, simBB = nw_align(wordB, wordB, scorer=alignmentWeights)
 				
-				# TODO: Not sure how to normalise the weights yet
-				#  Currently, divided by length of longest string
-				sim = sim / float(max([len(x) for x in almA+almB]))
+				#  Divided by length of longest string?
+				#sim = sim / float(max([len(x) for x in almA+almB]))
+				# No: divide by sum of self-self distance:
+				dist = 1 - ((2 * simAB) / (simAA + simBB))
+				# TODO: check that we're calculating distance, and not similarity. 
+				#  i.e. is "1 -" correct?
 				
 				# show the alignments
-				print(' '.join(almA)+"\n" + ' '.join(almB) + "     sim={0}".format(sim))
+				print(' '.join(almA)+"\n" + ' '.join(almB) + "     distance={0}".format(dist))
 				print("----")
-				out += str(sim)+","
+				out += str(dist)+","
 				# the Mantel test only requires the upper triangle of the matrix
 				if n1 > n2:
-					distanceList.append(sim)
+					distanceList.append(dist)
 	return distanceList, out
 
 def getDistances(wordFile, weightsFile, outFile):
