@@ -66,7 +66,7 @@ def getMeaningDistances(meanings):
 				meaningDistances.append(d)
 	return meaningDistances
 			
-def getWordDistances(words, alignmentWeights):
+def getWordDistances(words, alignmentWeights, gap_weight):
 	""" Get word distances from optimal string alignment"""
 	
 	# This makes a csv file with a matrix of distances between each word pair
@@ -84,9 +84,9 @@ def getWordDistances(words, alignmentWeights):
 				wordB = words[n2]
 				# get the alignment (Needleman-Wunsch algorithm nw_align from LingPy)
 				# similarity score
-				almA, almB, simAB = nw_align(wordA, wordB, scorer=alignmentWeights)
-				almAX, almBX, simAA = nw_align(wordA, wordA, scorer=alignmentWeights)
-				almAY, almBY, simBB = nw_align(wordB, wordB, scorer=alignmentWeights)
+				almA, almB, simAB = nw_align(wordA, wordB, scorer=alignmentWeights, gap=gap_weight)
+				almAX, almBX, simAA = nw_align(wordA, wordA, scorer=alignmentWeights, gap=gap_weight)
+				almAY, almBY, simBB = nw_align(wordB, wordB, scorer=alignmentWeights, gap=gap_weight)
 				
 				#  Divided by length of longest string?
 				#sim = sim / float(max([len(x) for x in almA+almB]))
@@ -104,7 +104,7 @@ def getWordDistances(words, alignmentWeights):
 					distanceList.append(dist)
 	return distanceList, out
 
-def getDistances(wordFile, weightsFile, outFile):
+def getDistances(wordFile, weightsFile, gap_weight, outFile):
 	""" Get word and meaning distances """
 	
 	# Read the language file
@@ -125,7 +125,7 @@ def getDistances(wordFile, weightsFile, outFile):
 
 
 	# get the distances
-	wordDistances, wordDistancesString = getWordDistances(words,alignmentWeights) 
+	wordDistances, wordDistancesString = getWordDistances(words,alignmentWeights,gap_weight) 
 	
 	# Write the word distances to a file
 	o = codecs.open(outFile,"w",'utf-8')
@@ -134,20 +134,18 @@ def getDistances(wordFile, weightsFile, outFile):
 	return wordDistances,meaningDistances
 	
 
-def getCompositionality(languageFile,AlignmentWeights,outFile):
+def getCompositionality(languageFile,AlignmentWeights,gap_weight,outFile, mantel_test_method='pearson',mantel_test_tail='upper',mantel_test_perms=10000):
 	""" Given a langauge file and an alignment file, 
 	Work out the word and meaning distances, then compute a 
 	Mantel test between them """
-	wordDistances,meaningDistances = getDistances(languageFile,AlignmentWeights,outFile)
+	wordDistances,meaningDistances = getDistances(languageFile,AlignmentWeights, gap_weight,outFile)
 
 	# Do mantel test using Jon Carr's code
-	mantelResult = Mantel.test(wordDistances,meaningDistances,perms=10000, method='pearson', tail='upper')
+	# 
+	mantelResult = Mantel.test(wordDistances,meaningDistances,perms=mantel_test_perms, method=mantel_test_method, tail=mantel_test_tail)
 
 	# Print results
 	print("Mantel test result")
 	print("r=",mantelResult[0],"p=",mantelResult[1], "z=",mantelResult[2])
 	return mantelResult
 
-
-# Example of running the code
-getCompositionality('ExampleData.csv',"AlignmentWeights.csv", "results.csv")
