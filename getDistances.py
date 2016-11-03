@@ -18,6 +18,7 @@ def getAlignmentWeights(filename):
 	d = o.read()
 	o.close()
 	d = d.replace("\r","")
+	d = d.replace('"',"")
 	# get the data
 	dat = [x.split(",")[1:] for x in d.split("\n") if len(x)>1]
 	# get column names
@@ -44,6 +45,7 @@ def readWordFile(wordFile):
 	wordFileText = wordFileLink.read()
 	wordFileLink.close()
 	wordFileText = wordFileText.replace("\r","")
+	wordFileText = wordFileText.replace('"',"")
 	
 	# Get the first column (words)
 	words = [line.split(',')[0] for line in wordFileText.split('\n')[1:] if len(line)>0]
